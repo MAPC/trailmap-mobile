@@ -1,0 +1,205 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MAPC Trailmap</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+
+    <link rel="apple-touch-icon" sizes="57x57" href="img/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="img/apple-touch-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="img/apple-touch-icon-114x114.png">
+
+
+    <link rel="stylesheet" href="libs/leaflet.css" />
+    <!--[if lte IE 8]><link rel="stylesheet" href="libs/leaflet.ie.css" /><![endif]-->
+
+    <script type="text/javascript" src="libs/leaflet.js"></script>
+    <script type="text/javascript" src="libs/MAPClayers.js"></script>
+
+    <style>
+        body {
+            padding: 0;
+            margin: 0;
+        }
+        html, body, #map {
+            height: 100%;
+        }
+        a, .leaflet-container a {
+            color: #014991;
+        }
+        #map {
+            z-index: 1;
+        }
+        #header, #legend, #attribution {
+            font-family: Arial, "MS Trebuchet", sans-serif;
+            background: rgba(255, 255, 255, 0.7);
+            -moz-box-shadow: 0 0 7px #ccc;
+            -webkit-box-shadow: 0 0 7px #ccc;
+            box-shadow: 0 0 7px #ccc;
+        }
+        #header {
+            color: #07478e;
+            font-weight: bold;
+            text-align: right;
+            padding: 4px;
+            font-size: 16px;
+            position: fixed; 
+            top: 10px; 
+            right: 10px; 
+            z-index: 2;
+        }
+        #legend {
+            padding: 4px;
+        }
+        #legend, #attribution {
+            font-size: 11px;
+            position: fixed; 
+            bottom: 20px; 
+            left: 5px; 
+            z-index: 2;
+        }
+        #legend ul {
+            color: #333;
+            list-style-type: none;
+            padding: 4px 0;
+            margin: 0px;
+        }
+        .ct { color: #7f3193; } 
+        .bl { color: #0874b9; }
+        .sl { color: #82c5ec; }
+        .or { color: #9dce6b; }
+        .ip { color: #229848; }
+        .up { color: #845723; }
+        .wp { color: #db813f; }
+        #attribution {
+            bottom: 2px;
+            font-size: 10px;
+            padding: 0 4px;
+        }
+        .leaflet-top .leaflet-control {
+            margin-top: 50px;
+        }
+        .mylocation {
+            position: absolute;
+            left: 0;
+            top: 0;
+            margin-left: 10px;
+            margin-top: 10px;
+            padding: 5px;
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 7px;
+            -moz-border-radius: 7px;
+            -webkit-border-radius: 7px;
+            color: rgba(255, 255, 255, 1);
+            z-index: 100;
+        }
+        .mylocation a {
+            background-color: rgba(255, 255, 255, 0.75);
+            background-position: 50% 50%;
+            background-repeat: no-repeat;
+            background-image: url(img/location.png);
+            display: block;
+            -moz-border-radius: 4px;
+            -webkit-border-radius: 4px;
+            border-radius: 4px;
+            width: 26px;
+            height: 26px;
+        }
+
+    </style>
+    <!-- Google Analytics -->
+    <script type="text/javascript">
+
+      var _gaq = _gaq || [];
+      _gaq.push(['_setAccount', 'UA-5547782-15']);
+      _gaq.push(['_trackPageview']);
+
+      (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+      })();
+
+    </script>
+</head>
+<body>
+    
+    <div id="map" style="z-index: 1;"></div>
+    <div class="mylocation">
+      <a href="javascript:void(0)" onclick="locateMe()" title="My Location"></a>
+    </div>
+    <div id="header">Greater Boston<br>Cycling and Walking Map</div>
+    <div id="legend">
+        <ul>
+            <li class="ct">Cycle Track</li>
+            <li class="bl">Bike Lane</li>
+            <li class="sl">Shared Lane</li>
+            <li class="or">On-road route</li>
+            <li class="ip">Improved path</li>
+            <li class="up">Unmproved path</li>
+            <li class="wp">Walking path</li>
+        </ul>
+        <a class="disclaimer" href="javascript:void(0)" onclick="showDisclaimer()">Disclaimer</a>
+    </div>
+
+    <div id="attribution">Powered by <a href="http://leaflet.cloudmade.com">Leaflet</a> - Map tiles by <a href="http://mapc.org">MAPC</a>, Data by <a href="http://www.mass.gov/mgis/">MassGIS</a>.</div>
+
+    <script>
+
+        // map
+        var layer = new L.MAPCTileLayer("trailmap");
+        var map = new L.Map("map",{
+            minZoom: 9,
+            maxZoom: 17,
+            attributionControl: false
+        });
+
+        map.addLayer(layer);
+
+        var locationset = false;
+        var circle;
+        function locateMe(){
+            if (!locationset) {
+              map.locateAndSetView();
+            } else {
+              map.removeLayer(circle);
+              locationset = false;
+            }
+        }
+        
+        function onLocationFound(e) {
+            var radius = e.accuracy / 2;
+            circle = new L.Circle(e.latlng, radius, {
+              color: "#B94A48",
+              opacity: 0.8,
+              weight: 2
+            });
+            if (!locationset) {
+                locationset = true;
+                map.addLayer(circle);
+            }
+        }
+        function onLocationError(e) {
+              var boston = new L.LatLng(42.357778, -71.061667); // geographical point (longitude and latitude)
+              locationset = false;
+              map.setView(boston, 9);
+        }
+        map.on("locationfound", onLocationFound);
+        map.on("locationerror", onLocationError);
+        map.locateAndSetView();
+
+        function showDisclaimer() {
+            var popupContent = "<strong>Disclaimer</strong>: The data herein is provided as is and for information purposes only. MAPC does not guarantee its completeness or accuracy. This project is a work in progress. Weather, traffic, construction or other events out of MAPC's control may affect the utility of the data provided. Plan accordingly and use caution, obey all applicable laws and follow generally accepted practices when using these facilities.",
+            popup = new L.Popup();
+
+            popup.setLatLng(map.getCenter());
+            popup.setContent(popupContent);
+
+            map.openPopup(popup);
+        }
+    </script>
+</body>
+</html>
+
